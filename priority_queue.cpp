@@ -9,11 +9,11 @@
 using namespace std;
 
 PriorityQueue::PriorityQueue() : from_queue(-1) {
-    cout << "Creating Priority queue" << endl;
+    //cout << "Creating Priority queue" << endl;
 }
 
 PriorityQueue::~PriorityQueue() {
-    cout << "Deleting Priority queue" << endl;
+    //cout << "Deleting Priority queue" << endl;
 }
 
 void PriorityQueue::insert_process(Process* inputproc_ptr) {
@@ -32,6 +32,10 @@ void PriorityQueue::insert_node_wprio(DlNode* inputnode_ptr, int priority) {
     proc_queues[proc_queue_dest].insert_node(inputnode_ptr);
 }
 
+void PriorityQueue::update_data(int priority, int waited) {
+	proc_queues[priority - 1].update_data(waited);
+}
+
 DlNode* PriorityQueue::get_currnode() {
     if (from_queue != -1)
         return proc_queues[from_queue].get_currnode();
@@ -47,13 +51,11 @@ DlNode* PriorityQueue::extract_currnode() {
     }
     else
         return nullptr;
-
 }
 
 DlNode* PriorityQueue::extract_node_wprio(int pid, int priority) {
     int proc_queue_dest = priority - 1;
-    DlNode* output_ptr = proc_queues[proc_queue_dest].extract_node_wnum(pid);
-    if (output_ptr
+    return proc_queues[proc_queue_dest].extract_node_wpid(pid);
 }
 
 Process* PriorityQueue::extract_process() {
@@ -65,18 +67,33 @@ Process* PriorityQueue::extract_process() {
 }
 
 void PriorityQueue::find_next_node() {
-    int i = 0, found = 0;
-    DlNode* temp_node = nullptr;
+    int i = 0;
+    bool found = false;
     while (!found && i < 7) {
         proc_queues[i].find_next_node();
-        temp_node = proc_queues[i].get_currnode();
-        if (temp_node != nullptr) {
+        if (proc_queues[i].get_currnode() != nullptr) {
             from_queue = i;
-            found = 1;
+            found = true;
         }
         i++;
     }
     if (!found) {
         from_queue = -1;
     }
+}
+
+bool PriorityQueue::is_empty() {
+    for (int i = 0; i < 7; i++) {
+        if (proc_queues[i].get_firstnode() != nullptr)
+            return false;
+    }
+    return true;
+}
+
+// Print statistics
+void PriorityQueue::print_data() {
+	for (int i = 0; i < 7; i++) {
+		cout << "Average waiting time for processes with priority " << i + 1 << ": ";
+		cout << (float)proc_queues[i].get_timeslots_waited() / (float)proc_queues[i].get_total_proc() << endl;
+	}
 }

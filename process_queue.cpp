@@ -7,18 +7,19 @@
 using namespace std;
 
 ProcessQueue::ProcessQueue() : firstnode_ptr(nullptr), currnode_ptr(nullptr),
-							   afternode_ptr(nullptr) {
-	cout << "Creating Process Queue" << endl;
+							   afternode_ptr(nullptr), total_proc(0), timeslots_waited(0) {
+	//cout << "Creating Process Queue" << endl;
 }
 
 ProcessQueue::~ProcessQueue() {
-    cout << "Deleting Process Queue" << endl;
+    //cout << "Deleting Process Queue" << endl;
 	if (firstnode_ptr != nullptr)
 		del_all_nodes(firstnode_ptr);
 }
 
 // Private recursive function for the ProcessQueue destructor
 void ProcessQueue::del_all_nodes(DlNode* node_ptr) {
+	cerr << "There are remaining nodes in ProQ" << endl;
 	DlNode* next_node_ptr = node_ptr->get_nextnode();
 	if (next_node_ptr != nullptr)
 		del_all_nodes(next_node_ptr);
@@ -65,6 +66,10 @@ DlNode* ProcessQueue::get_currnode() {
     return currnode_ptr;
 }
 
+DlNode* ProcessQueue::get_firstnode() {
+    return firstnode_ptr;
+}
+
 // When a node is extracted, then currnode_ptr becomes nullptr
 DlNode* ProcessQueue::extract_currnode() {
 	// If queue is empty
@@ -100,7 +105,7 @@ DlNode* ProcessQueue::extract_currnode() {
 	}
 }
 
-DlNode* ProcessQueue::extract_node_wnum(int pid) {
+DlNode* ProcessQueue::extract_node_wpid(int pid) {
 	// If queue is empty
 	if (firstnode_ptr == nullptr) {
 		cerr << "No node in process queue, cannot extract" << endl;
@@ -109,20 +114,22 @@ DlNode* ProcessQueue::extract_node_wnum(int pid) {
 	// Else normally
 	else {
 		DlNode* search_ptr = firstnode_ptr;
-		while (search_ptr != nullptr) {
-			if (search_ptr->get_process()->get_pid() == pid
+		bool found = false;
+		while (search_ptr != nullptr && !found) {
+			if (search_ptr->get_process()->get_pid() == pid)
+				found = true;
+			else {
+				DlNode* temp_ptr = search_ptr;
+				search_ptr = temp_ptr->get_nextnode();
+			}
 		}
-
 		if (search_ptr == nullptr) {
 			cerr << "No node in process queue with input pid, cannot extract" << endl;
 			return nullptr;
 		}
 
-
-
-
-		DlNode* tempnext_ptr = currnode_ptr->get_nextnode();
-		DlNode* tempprev_ptr = currnode_ptr->get_prevnode();
+		DlNode* tempnext_ptr = search_ptr->get_nextnode();
+		DlNode* tempprev_ptr = search_ptr->get_prevnode();
 
 		// Fix next and previous pointers
 		if (tempnext_ptr != nullptr)
@@ -138,13 +145,33 @@ DlNode* ProcessQueue::extract_node_wnum(int pid) {
 		}
 
 		// Temp node for output
-		DlNode* output_ptr = currnode_ptr;
-		currnode_ptr = nullptr;
+		DlNode* output_ptr = search_ptr;
+		// If the extracted node is afternode_ptr
+		if (search_ptr == afternode_ptr) {
+			afternode_ptr = search_ptr->get_nextnode();
+			if (afternode_ptr == nullptr)
+	        	afternode_ptr = firstnode_ptr;
+		}
+
+		search_ptr = nullptr;
 		// Output node* should not point anywhere
 		output_ptr->set_nextnode(nullptr);
         output_ptr->set_prevnode(nullptr);
 		return output_ptr;
 	}
+}
+
+void ProcessQueue::update_data(int waited) {
+	total_proc++;
+	timeslots_waited += waited;
+}
+
+int ProcessQueue::get_total_proc() {
+	return total_proc;
+}
+
+int ProcessQueue::get_timeslots_waited() {
+	return timeslots_waited;
 }
 
 void ProcessQueue::find_next_node() {

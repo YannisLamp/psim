@@ -20,13 +20,18 @@ public:
 	void insert_process(Process*);
 	void insert_node_norm(DlNode*);
 	void insert_node_wprio(DlNode*, int);
+	void update_data(int, int);
 
 	DlNode* get_currnode();
 	DlNode* extract_currnode();
+	DlNode* extract_node_wprio(int, int);
 	// Extracts process, deleting current node
 	Process* extract_process();
 
 	void find_next_node();
+	bool is_empty();
+	
+	void print_data();
 };
 
 #endif
